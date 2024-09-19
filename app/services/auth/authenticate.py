@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from typing import Annotated, Optional
+from typing import Optional
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -12,26 +12,13 @@ from fastapi import APIRouter
 
 from app.services.users.crud import get_user_db
 from app.core.database import get_db
+from app.core.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
 from sqlalchemy.orm import Session
 
 # to get a string like this run:
 # openssl rand -hex 32
-SECRET_KEY = "70577e4d50ea40e29aea48d2dedbb9d33257a91ce2fa2bae9f1b16989b62b90e"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
 router  = APIRouter()
-
-fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
-        "hashed_password": "$2b$12$8OBwhnuIcNml.c0MBbK1ZO5H2B/goZ2qsJV7EY9MWX/pfn2zGvkzW",
-        "disabled": False,
-    }
-}
-
 
 # Make Password context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -79,7 +66,10 @@ async def login_for_access_token(login_data: LoginBodyModel,  db : Session = Dep
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    access_token = float(ACCESS_TOKEN_EXPIRE_MINUTES)
+
+    access_token_expires = timedelta(minutes=access_token)
     access_token = create_access_token(
         data={"user_email": user.email}, expires_delta=access_token_expires
     )
