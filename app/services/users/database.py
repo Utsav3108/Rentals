@@ -1,11 +1,11 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
+from app.core.database import Base
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
 
 
-Base = declarative_base()
+
 
 # 340 bytes
 class User(Base):
@@ -20,7 +20,7 @@ class User(Base):
     password = Column(String(70), nullable=False, default="00000")
 
     # Relationship to Landlord model
-    landlord = relationship("Landlord", back_populates="user", uselist=False)
+    # landlord = relationship("Landlord", back_populates="user", uselist=False)
 
     def update(self, update_data: dict):
         # Helper method to update fields dynamically
@@ -28,11 +28,11 @@ class User(Base):
             setattr(self, key, value)
 
 
-class Landlord(Base):
-    __tablename__ = "Landlord"
+# class Landlord(Base):
+#     __tablename__ = "Landlord"
 
-    lid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    uid = Column(UUID(as_uuid=True), ForeignKey('Users.uid'), nullable=False)
+#     lid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+#     uid = Column(UUID(as_uuid=True), ForeignKey('Users.uid'), nullable=False)
 
-    # Relationship back to User model
-    user = relationship("User", back_populates="landlord")
+#     # Relationship back to User model
+#     user = relationship("User", back_populates="landlord")
