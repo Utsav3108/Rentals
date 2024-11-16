@@ -91,8 +91,3 @@ async def google_callback(code: str = Query(...)):
         print(f"Error in google_callback: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     
-
-
-# Client ID : 118806692893-ss14d4cvtvrvmigqh275hsuf536irfed.apps.googleusercontent.com
-# Client Secret : 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 
-# http://127.0.0.1:8000/rentals/api/auth/google-callback
