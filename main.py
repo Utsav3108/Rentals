@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from sqlalchemy.orm import sessionmaker
 from app.services.auth.router import router as auth_router
 from app.services.users.routers import router as user_routers
@@ -22,6 +24,15 @@ Base.metadata.create_all(bind=engine)
 
 # Initialize FastAPI app
 app = FastAPI()
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Replace "*" with allowed origins (e.g., specific frontend URLs)
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods, including OPTIONS
+    allow_headers=["*"],  # Allow all headers
+)
 
 app.include_router(router=auth_router, prefix="/rentals", tags=["Auth"])
 app.include_router(router=user_routers, prefix="/rentals", tags=["User"])
