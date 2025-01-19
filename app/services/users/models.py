@@ -6,6 +6,7 @@ class RegisterResponse(BaseModel):
     message : str = "User Created Successfully"
 
 class UserDetails(BaseModel):
+    id : uuid.UUID
     firstname : str
     lastname : str
     phone : int

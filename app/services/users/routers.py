@@ -2,11 +2,11 @@ from fastapi import APIRouter
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from fastapi import Depends, HTTPException, status
-from .models import RegisterModel, RegisterResponse, UpdateModel, ChangePassword, ForgotPasswordModel, ResponseMessage
-from .utills import get_current_user
+from .models import RegisterModel, RegisterResponse, UpdateModel, ChangePassword, ForgotPasswordModel
+from .controller import get_current_user
 from .database import User
 from sqlalchemy.exc import DataError
-from .utills import get_password_hash, verify_password
+from .controller import verify_password, changePassword
 
 router = APIRouter()
 
@@ -22,7 +22,7 @@ def register_user(data : RegisterModel, db : Session = Depends(get_db)):
 
     from .crud import get_user_db, create_user
     from .database import User
-    from .utills import get_password_hash
+    from .controller import get_password_hash
     import uuid
 
     if data.password != data.confirm_password :
@@ -54,11 +54,14 @@ def get_user(current_user: User = Depends(get_current_user)):
     from .models import UserDetails
 
     user = current_user
-    user_details = UserDetails(firstname=user.firstname, 
-                               lastname=user.lastname, 
-                               phone=user.phone, 
-                               email=user.email, 
-                               password=user.password)
+    user_details = UserDetails(
+                            id=user.uid,
+                            firstname=user.firstname, 
+                            lastname=user.lastname, 
+                            phone=user.phone, 
+                            email=user.email, 
+                            password=user.password
+                            )
     if user is None : 
         raise USER_NOT_FOUND_ERROR
     else :
@@ -75,7 +78,7 @@ def change_user_field(data : UpdateModel, db : Session = Depends(get_db), curren
 
     
 
-    update_data = data.model_dump(exclude_none=True)
+    update_data = data.model_dump(exclude_unset=True)
 
     if not update_data:
         raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="No fields to update")
@@ -88,6 +91,7 @@ def change_user_field(data : UpdateModel, db : Session = Depends(get_db), curren
         db.refresh(current_user)  # Refresh to get the latest data from the database
 
         return {"message": "Update Successfully"}
+
     except DataError as error:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Validation Error")
 
@@ -115,25 +119,11 @@ def delete_user_field(db : Session = Depends(get_db), current_user: User = Depen
 
 #  ==================  User Change Password Endpoint ===================================
 
-def changePassword(data : ChangePassword, db : Session, current_user : User) -> ResponseMessage:
-    if data.new_password == data.confirm_password :
-        try :
-            new_hashed_password = get_password_hash(data.new_password)
-            update_data = {"password": new_hashed_password}
-            current_user.update(update_data=update_data)
-            db.commit()
-            db.refresh(current_user)  # Refresh to get the latest data from the database
 
-            return ResponseMessage(message="Password Changed Successfully")
-        except DataError as error:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Validation Error")
-    else :
-        raise PASSWORD_ERROR
 
 @router.patch("/user/updatePassword")
 def user_password_change(data : ChangePassword, db : Session = Depends(get_db), current_user: User = Depends(get_current_user)):
 
-    
 
     user = db.query(User).filter(User.email == current_user.email).first()
 

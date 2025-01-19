@@ -1,26 +1,33 @@
-from .authenticate import authenticate_user, timedelta, create_access_token
+
+from typing import Annotated
 from fastapi import APIRouter
+from fastapi import Depends, HTTPException, status, Query
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from fastapi.responses import RedirectResponse
+from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
+from fastapi.openapi.models import OAuth2 
+
 from app.core.database import get_db
 from app.core.config import ACCESS_TOKEN_EXPIRE_MINUTES
 
-from .models import LoginBodyModel, Token
-from fastapi import Depends, HTTPException, status, Request, Query
-
-from fastapi.responses import RedirectResponse
 import httpx
-from sqlalchemy.orm import Session
 
-from google.oauth2 import id_token
-from google.auth.transport import requests
+from sqlalchemy.orm import Session
 
 from pydantic import BaseModel
 
+from app.core.config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI 
+
+from .authenticate import authenticate_user, timedelta, create_access_token
+from .models import Token
+
 router  = APIRouter()
 
-@router.post("/login")
-async def login_for_access_token(login_data: LoginBodyModel,  db : Session = Depends(get_db)) -> Token:
 
-    user = authenticate_user(db, login_data.email, login_data.password)
+@router.post("/login", response_model=None)
+async def login_for_access_token(login_data: Annotated[OAuth2PasswordRequestForm, Depends()],  db : Session = Depends(get_db)):
+    print("login data arrived")
+    user = authenticate_user(db, login_data.username, login_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -36,7 +43,6 @@ async def login_for_access_token(login_data: LoginBodyModel,  db : Session = Dep
     )
     return Token(access_token=access_token, token_type="bearer", uid=user.uid)
 
-from app.core.config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI 
 
 
 
